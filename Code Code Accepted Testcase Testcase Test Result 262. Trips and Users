@@ -1,0 +1,23 @@
+with cte as
+(
+select t.*,
+       u1.users_id as user_client_id,
+       u1.banned as client_banned,
+       u1.role as u1_role,
+       u2.users_id as user_driver_id,
+       u2.banned as driver_banned,
+       u2.role as driver_role
+from trips t
+join users u1
+on t.client_id = u1.users_id
+join users u2
+on t.driver_id = u2.users_id
+)
+select request_at as Day,
+       round(count(case when status like 'cancelled%' then 1 else null end)/count(*),2) as `Cancellation Rate`
+from cte
+where request_at between '2013-10-01' and '2013-10-03'
+and client_banned like 'No'
+and driver_banned like 'No'
+group by 1
+order by request_at
