@@ -1,0 +1,22 @@
+with recursive expandable_table as
+(
+    select num,
+           frequency, 
+           1 as current_count
+    from numbers
+    union all
+    select num,
+           frequency,
+           current_count+1
+    from expandable_table
+    where current_count < frequency
+), cte1 as
+(
+    select num,
+           row_number() over (order by num asc) as rwn,
+           count(*) over () as total_count
+    from expandable_table
+)
+select avg(num) as median
+from cte1
+where rwn between total_count/2 and total_count/2+1
