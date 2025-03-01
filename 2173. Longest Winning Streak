@@ -1,0 +1,29 @@
+with cte as
+(
+select player_id
+       ,match_day
+       ,result
+       ,row_number() over (partition by player_id order by match_day) as rwn1
+       ,row_number() over (partition by player_id, result order by match_day) as rwn2
+from matches
+)
+, cte1 as
+(
+select player_id
+       ,(rwn1-rwn2) as grp
+from cte
+where result = 'Win'
+)
+, cte2 as
+(
+select player_id, grp
+       ,count(*) as streaks
+from cte1
+group by player_id, grp
+)
+select c.player_id
+       ,ifnull(max(streaks),0) as longest_streak
+from cte c
+left join cte2 c2
+on c.player_id = c2.player_id
+group by player_id
