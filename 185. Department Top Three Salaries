@@ -1,3 +1,54 @@
+1. Understanding the Problem:
+We need the top 3 unique salaries in each department.
+Employees with the same salary should get the same ranking.
+If multiple employees have the same salary, we still count them as part of the top 3 unique salaries.
+Why DENSE_RANK()?
+DENSE_RANK() assigns consecutive ranks to unique salary values.
+If two employees have the same salary, they get the same rank.
+The next distinct salary gets the next immediate rank (no gaps).
+This ensures that we correctly select the top 3 unique salaries.
+Why Not RANK()?
+RANK() skips rankings if there are ties.
+This causes issues when filtering for the top 3 because there might be gaps, and we may get fewer than 3 salaries.
+Why Not ROW_NUMBER()?
+ROW_NUMBER() gives a unique number to each row, even if salaries are the same.
+This completely ignores the requirement for top 3 unique salaries.
+This does not group same-salary employees correctly, breaking the requirement.
+
+with cte as
+(
+select e.name as Employee
+       ,d.name as Department
+       ,e.salary as salary
+       ,dense_rank() over (partition by d.name order by e.salary desc) as rnks
+from employee e
+join department d
+on e.departmentId = d.id
+)
+select Department
+       ,Employee
+       ,Salary
+from cte
+where rnks <= 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 with cte as
 (
 select d.name as Department,
