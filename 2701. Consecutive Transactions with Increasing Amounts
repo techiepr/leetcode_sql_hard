@@ -1,0 +1,35 @@
+with dataset_1 as
+(
+select a.customer_id
+       ,a.transaction_date
+from transactions a
+join transactions b
+on a.customer_id = b.customer_id
+and b.amount > a.amount
+and datediff(b.transaction_date, a.transaction_date) = 1
+), dataset_2 as
+(
+select customer_id
+       ,transaction_date
+       ,row_number() over (partition by customer_id order by transaction_date) as rn
+from dataset_1
+), dataset_3 as
+(
+select customer_id
+       ,transaction_date
+       ,date_sub(transaction_date, interval rn day) as date_group
+from dataset_2
+), dataset_4 as
+(
+select customer_id
+       ,min(transaction_date) as consecutive_start
+       ,count(*) as cnt
+from dataset_3
+group by customer_id, date_group
+)
+select customer_id
+       ,consecutive_start
+       ,date_add(consecutive_start, interval cnt day) as consecutive_end
+from dataset_4
+where cnt >1
+order by customer_id
